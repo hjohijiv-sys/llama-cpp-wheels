@@ -32,7 +32,9 @@ jobs:
   build_wheels:
     needs: extract_tag
     runs-on: ${{ matrix.os }}
+    continue-on-error: true
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: ubuntu-latest
