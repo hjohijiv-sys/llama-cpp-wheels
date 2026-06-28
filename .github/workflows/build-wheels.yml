@@ -82,14 +82,13 @@ jobs:
         run: |
           sudo apt update
           sudo apt install -y cmake build-essential python3-dev libopenblas-dev patchelf
-      
+
       - name: Patch chrono include and static_assert macro
         if: matrix.os == 'windows-latest'
         shell: pwsh
         run: |
             $logPath = "vendor\llama.cpp\common\log.cpp"
 
-            # Check file exists before patching
             if (-Not (Test-Path $logPath)) {
               Write-Error "File not found: $logPath"
               exit 1
@@ -97,14 +96,12 @@ jobs:
 
             $lines = Get-Content $logPath
 
-            # Add #include <chrono> if missing
             if (-not ($lines -match "#include <chrono>")) {
               $lastIncludeIdx = ($lines | Select-String '#include' | Select-Object -Last 1).LineNumber - 1
               $lines = $lines[0..$lastIncludeIdx] + '#include <chrono>' + $lines[($lastIncludeIdx+1)..($lines.Length - 1)]
               $lines | Set-Content $logPath
             }
 
-            # Comment out static_assert macro redefinition
             (Get-Content $logPath) | ForEach-Object {
               if ($_ -match '^\s*#define\s+static_assert') {
                   "# $($_)"
@@ -112,7 +109,6 @@ jobs:
                   $_
               }
             } | Set-Content $logPath
-
 
       - name: Set up MSVC (Windows only)
         if: matrix.os == 'windows-latest'
@@ -131,27 +127,27 @@ jobs:
           CIBW_SKIP: musllinux* *-win32*
 
           CIBW_ENVIRONMENT_LINUX: >-
-            CMAKE_ARGS="-DCMAKE_INSTALL_LIBDIR=llama_cpp -DLLAMA_CUBLAS=OFF -DLLAMA_METAL=OFF -DLLAMA_OPENBLAS=ON -DLLAMA_NATIVE=OFF"
+            CMAKE_ARGS="-DCMAKE_INSTALL_LIBDIR=llama_cpp -DGGML_CUDA=OFF -DGGML_METAL=OFF -DGGML_BLAS=ON -DGGML_NATIVE=OFF -DLLAMA_BUILD_SERVER=OFF"
 
           CIBW_ENVIRONMENT_WINDOWS: >-
             CFLAGS="/std:c11"
             CXXFLAGS="/std:c++17 /Zc:__cplusplus"
             CMAKE_ARGS="-DCMAKE_INSTALL_LIBDIR=llama_cpp
-                        -DLLAMA_CUBLAS=OFF
-                        -DLLAMA_METAL=OFF
-                        -DLLAMA_OPENBLAS=ON
-                        -DLLAMA_NATIVE=OFF
+                        -DGGML_CUDA=OFF
+                        -DGGML_METAL=OFF
+                        -DGGML_BLAS=ON
+                        -DGGML_NATIVE=OFF
                         -DCMAKE_C_STANDARD=11
                         -DCMAKE_CXX_STANDARD=17
                         -DCMAKE_C_STANDARD_REQUIRED=ON
                         -DCMAKE_CXX_STANDARD_REQUIRED=ON
-                        -DLLAMA_BUILD_EXAMPLES=OFF"
-
+                        -DLLAMA_BUILD_EXAMPLES=OFF
+                        -DLLAMA_BUILD_SERVER=OFF"
 
           CIBW_ENVIRONMENT_MACOS: >-
             MACOSX_DEPLOYMENT_TARGET=10.15
             CXXFLAGS="-std=c++17"
-            CMAKE_ARGS="-DCMAKE_INSTALL_LIBDIR=llama_cpp -DLLAMA_NATIVE=OFF -DLLAMA_BLAS=ON -DLLAMA_OPENBLAS=ON"
+            CMAKE_ARGS="-DCMAKE_INSTALL_LIBDIR=llama_cpp -DGGML_NATIVE=OFF -DGGML_BLAS=ON -DGGML_METAL=OFF"
 
           CIBW_MANYLINUX_X86_64_IMAGE: ${{ matrix.manylinux_image }}
           CIBW_MANYLINUX_AARCH64_IMAGE: ${{ matrix.manylinux_image }}
