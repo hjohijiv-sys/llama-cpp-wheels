@@ -154,15 +154,7 @@ jobs:
           CIBW_MANYLINUX_X86_64_IMAGE: ${{ matrix.manylinux_image }}
           CIBW_MANYLINUX_AARCH64_IMAGE: ${{ matrix.manylinux_image }}
 
-          CIBW_REPAIR_WHEEL_COMMAND_LINUX: >
-            mkdir -p {dest_dir}/llama_cpp/.libs &&
-            cp /project/llama_cpp/lib/*.so {dest_dir}/llama_cpp/.libs &&
-            echo "Contents of .libs:" &&
-            ls -al {dest_dir}/llama_cpp/.libs &&
-            auditwheel repair -w {dest_dir} {wheel} || (
-              echo "⚠️ auditwheel failed, copying original wheel..." &&
-              cp {wheel} {dest_dir}
-            )
+          CIBW_REPAIR_WHEEL_COMMAND_LINUX: ""
           CIBW_REPAIR_WHEEL_COMMAND_MACOS: >
             mkdir -p {dest_dir}/llama_cpp/.libs &&
             cp /project/llama_cpp/lib/*.dylib {dest_dir}/llama_cpp/.libs &&
